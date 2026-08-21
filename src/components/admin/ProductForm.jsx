@@ -1,0 +1,429 @@
+import React, { useState, useEffect } from 'react';
+import { useStore } from '../../context/StoreContext';
+import { X, Save } from 'lucide-react';
+
+export const ProductForm = ({ productToEdit, onClose }) => {
+  const { addProduct, updateProduct, settings } = useStore();
+
+  const isEditing = !!productToEdit;
+
+  const sampleImages = [
+    { label: 'MacBook', url: 'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?auto=format&fit=crop&w=800&q=80' },
+    { label: 'Dell Laptop', url: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=800&q=80' },
+    { label: 'ThinkPad', url: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=800&q=80' },
+    { label: 'Gaming Laptop', url: 'https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=800&q=80' },
+    { label: 'Mouse', url: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=800&q=80' },
+    { label: 'Keyboard', url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80' },
+    { label: 'Charger', url: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80' },
+    { label: 'Monitor', url: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=800&q=80' },
+  ];
+
+  const [formData, setFormData] = useState({
+    name: '',
+    category: 'Laptops',
+    brand: 'Dell',
+    condition: 'Brand New',
+    price: '',
+    originalPrice: '',
+    inStock: true,
+    stockCount: 5,
+    isFeatured: false,
+    image: sampleImages[0].url,
+    summary: '',
+    specs: {
+      processor: '',
+      ram: '',
+      storage: '',
+      display: '',
+      graphics: '',
+      battery: '',
+      ports: '',
+      weight: '',
+      os: 'Windows 11 Pro',
+      warranty: '3 Months Store Warranty'
+    }
+  });
+
+  useEffect(() => {
+    if (productToEdit) {
+      setFormData({
+        ...productToEdit,
+        price: productToEdit.price || '',
+        originalPrice: productToEdit.originalPrice || '',
+        specs: { ...productToEdit.specs }
+      });
+    }
+  }, [productToEdit]);
+
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSpecChange = (specKey, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      specs: { ...prev.specs, [specKey]: value }
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.price) {
+      alert('Please provide at least product name and price.');
+      return;
+    }
+
+    const payload = {
+      ...formData,
+      price: Number(formData.price),
+      originalPrice: formData.originalPrice ? Number(formData.originalPrice) : null,
+      stockCount: Number(formData.stockCount || 1)
+    };
+
+    if (isEditing) {
+      updateProduct(payload);
+    } else {
+      addProduct(payload);
+    }
+    onClose();
+  };
+
+  const isLaptop = formData.category === 'Laptops';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/65 backdrop-blur-md overflow-y-auto">
+      <div className="relative w-full max-w-3xl bg-[#f6f8fb] border border-white rounded-3xl shadow-2xl overflow-hidden my-6 max-h-[94vh] flex flex-col">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-slate-200 bg-white sticky top-0 z-10 backdrop-blur-md">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-700">Catalog editor</p>
+            <h3 className="text-base font-bold text-slate-950">
+            {isEditing ? ('Edit Product: ' + formData.name) : 'Add New Product'}
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} className="admin-form p-5 sm:p-7 overflow-y-auto flex-1 space-y-6 text-xs">
+          
+          {/* General Information */}
+          <div className="space-y-3">
+            <label className="font-bold text-sky-700 uppercase tracking-wider text-[11px]">
+              1. Basic Information
+            </label>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-slate-400 mb-1">Product Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Dell XPS 15 9530"
+                  value={formData.name}
+                  onChange={(e) => handleChange('name', e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Brand *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Dell, Apple, HP, Logitech"
+                  value={formData.brand}
+                  onChange={(e) => handleChange('brand', e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-slate-400 mb-1">Category</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => handleChange('category', e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 cursor-pointer"
+                >
+                  <option value="Laptops">Laptops</option>
+                  <option value="Accessories">Accessories</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Condition</label>
+                <select
+                  value={formData.condition}
+                  onChange={(e) => handleChange('condition', e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 cursor-pointer"
+                >
+                  <option value="Brand New">Brand New</option>
+                  <option value="Like New">Like New</option>
+                  <option value="Refurbished">Refurbished</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Stock Status</label>
+                <select
+                  value={formData.inStock ? 'true' : 'false'}
+                  onChange={(e) => handleChange('inStock', e.target.value === 'true')}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 cursor-pointer"
+                >
+                  <option value="true">In Stock</option>
+                  <option value="false">Out of Stock</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-slate-400 mb-1">Sale Price ({settings.currency}) *</label>
+                <input
+                  type="number"
+                  required
+                  placeholder="e.g. 75000"
+                  value={formData.price}
+                  onChange={(e) => handleChange('price', e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl font-bold text-emerald-400 focus:outline-none focus:border-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Original / Cut Price ({settings.currency})</label>
+                <input
+                  type="number"
+                  placeholder="e.g. 90000"
+                  value={formData.originalPrice}
+                  onChange={(e) => handleChange('originalPrice', e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 focus:outline-none focus:border-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Stock Quantity</label>
+                <input
+                  type="number"
+                  value={formData.stockCount}
+                  onChange={(e) => handleChange('stockCount', e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-400 mb-1">Short Summary / Pitch</label>
+              <textarea
+                rows="2"
+                placeholder="Brief description highlighted on the product card..."
+                value={formData.summary}
+                onChange={(e) => handleChange('summary', e.target.value)}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 resize-none"
+              ></textarea>
+            </div>
+          </div>
+
+          {/* Photo URL & Quick Presets */}
+          <div className="space-y-2 pt-3 border-t border-slate-800">
+            <label className="font-bold text-sky-700 uppercase tracking-wider text-[11px]">
+              2. Product Image
+            </label>
+
+            <div className="flex gap-3 items-center">
+              <img
+                src={formData.image || sampleImages[0].url}
+                alt="Preview"
+                className="w-14 h-14 rounded-xl object-cover bg-slate-950 border border-slate-700 shrink-0"
+              />
+              <div className="flex-1">
+                <input
+                  type="url"
+                  placeholder="Paste image URL (https://...)"
+                  value={formData.image}
+                  onChange={(e) => handleChange('image', e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-sky-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <span className="text-[10px] text-slate-500">Or choose preset photo:</span>
+              {sampleImages.map((s) => (
+                <button
+                  type="button"
+                  key={s.label}
+                  onClick={() => handleChange('image', s.url)}
+                  className="px-2 py-0.5 rounded text-[10px] bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800"
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Detailed Technical Specifications */}
+          <div className="space-y-3 pt-3 border-t border-slate-800">
+            <label className="font-bold text-sky-700 uppercase tracking-wider text-[11px]">
+              3. Technical Specifications {isLaptop ? '(Laptop Hardware Details)' : '(Features)'}
+            </label>
+
+            {isLaptop ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 mb-1">Processor (CPU)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Intel Core i7-13700H (14-Core)"
+                    value={formData.specs?.processor || ''}
+                    onChange={(e) => handleSpecChange('processor', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">RAM Memory</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 16GB DDR5 5200MHz"
+                    value={formData.specs?.ram || ''}
+                    onChange={(e) => handleSpecChange('ram', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">SSD Storage</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 512GB NVMe PCIe Gen4"
+                    value={formData.specs?.storage || ''}
+                    onChange={(e) => handleSpecChange('storage', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">Display Screen</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 14.0-inch FHD+ IPS (1920x1200) 400 nits"
+                    value={formData.specs?.display || ''}
+                    onChange={(e) => handleSpecChange('display', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">Graphics (GPU)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. NVIDIA RTX 4050 6GB or Integrated"
+                    value={formData.specs?.graphics || ''}
+                    onChange={(e) => handleSpecChange('graphics', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">Battery Health / Life</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 86Wh (95% Health) - up to 9 hours"
+                    value={formData.specs?.battery || ''}
+                    onChange={(e) => handleSpecChange('battery', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">Operating System</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Windows 11 Pro / macOS"
+                    value={formData.specs?.os || ''}
+                    onChange={(e) => handleSpecChange('os', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">Warranty Period</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 3 Months Store Warranty + Charger"
+                    value={formData.specs?.warranty || ''}
+                    onChange={(e) => handleSpecChange('warranty', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 mb-1">Connectivity / Ports</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Bluetooth 5.1 & USB-C"
+                    value={formData.specs?.connectivity || ''}
+                    onChange={(e) => handleSpecChange('connectivity', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">Compatibility</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Windows, Mac, iOS, Android"
+                    value={formData.specs?.compatibility || ''}
+                    onChange={(e) => handleSpecChange('compatibility', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">Warranty</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 1 Year Replacement Warranty"
+                    value={formData.specs?.warranty || ''}
+                    onChange={(e) => handleSpecChange('warranty', e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer Submit */}
+          <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3 sticky bottom-0 bg-[#f6f8fb] pb-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5 shadow-lg shadow-emerald-600/20"
+            >
+              <Save className="w-4 h-4" />
+              <span>{isEditing ? 'Save Changes' : 'Create Product'}</span>
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  );
+};
