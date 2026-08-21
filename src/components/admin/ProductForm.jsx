@@ -2,6 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { X, Save, Upload, Image as ImageIcon } from 'lucide-react';
 
+const ACCESSORY_SPEC_FIELDS = [
+  { key: 'productType', label: 'Product Type', placeholder: 'e.g. USB Flash Drive, HDMI Cable, Monitor' },
+  { key: 'capacity', label: 'Capacity / Size', placeholder: 'e.g. 32GB, 64GB, 1TB, 24-inch' },
+  { key: 'connectivity', label: 'Connection / Interface', placeholder: 'e.g. USB-A 3.0, USB-C, HDMI 2.1, Bluetooth' },
+  { key: 'compatibility', label: 'Compatibility', placeholder: 'e.g. Windows, Mac, Android, PlayStation' },
+  { key: 'length', label: 'Cable Length', placeholder: 'e.g. 1.5 meters (cables only)' },
+  { key: 'features', label: 'Main Features', placeholder: 'e.g. Fast charging, wireless, waterproof' },
+  { key: 'color', label: 'Color / Finish', placeholder: 'e.g. Black, Silver, White' },
+  { key: 'warranty', label: 'Warranty', placeholder: 'e.g. 1 Year Warranty' }
+];
+
 export const ProductForm = ({ productToEdit, onClose }) => {
   const { addProduct, updateProduct, settings } = useStore();
 
@@ -366,38 +377,21 @@ export const ProductForm = ({ productToEdit, onClose }) => {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 mb-1">Connectivity / Ports</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Bluetooth 5.1 & USB-C"
-                    value={formData.specs?.connectivity || ''}
-                    onChange={(e) => handleSpecChange('connectivity', e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 mb-1">Compatibility</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Windows, Mac, iOS, Android"
-                    value={formData.specs?.compatibility || ''}
-                    onChange={(e) => handleSpecChange('compatibility', e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 mb-1">Warranty</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 1 Year Replacement Warranty"
-                    value={formData.specs?.warranty || ''}
-                    onChange={(e) => handleSpecChange('warranty', e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
-                  />
+              <div>
+                <p className="text-[11px] text-slate-500 mb-3">Add the details shoppers need for cables, storage, monitors, mice, keyboards, and other accessories.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {ACCESSORY_SPEC_FIELDS.map((field) => (
+                    <div key={field.key}>
+                      <label className="block text-slate-400 mb-1">{field.label}</label>
+                      <input
+                        type="text"
+                        placeholder={field.placeholder}
+                        value={formData.specs?.[field.key] || ''}
+                        onChange={(e) => handleSpecChange(field.key, e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

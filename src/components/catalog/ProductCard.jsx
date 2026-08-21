@@ -45,7 +45,7 @@ export const ProductCard = ({ product }) => {
               {product.condition}
             </span>
             {discountText && (
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-600 text-white shadow-sm">
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#F26522] text-white shadow-sm">
                 {discountText}
               </span>
             )}
@@ -86,12 +86,12 @@ export const ProductCard = ({ product }) => {
 
         {/* Brand & Name */}
         <div className="mb-2">
-          <span className="text-[10px] font-bold text-sky-700 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-[#1F4F9D] uppercase tracking-wider">
             {product.brand}
           </span>
           <h3 
             onClick={() => setSelectedProduct(product)}
-            className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-sky-700 transition-colors line-clamp-2 cursor-pointer mt-0.5"
+            className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-[#1F4F9D] transition-colors line-clamp-2 cursor-pointer mt-0.5"
           >
             {product.name}
           </h3>
@@ -103,7 +103,7 @@ export const ProductCard = ({ product }) => {
             <div className="font-semibold text-slate-700 truncate">
               {product.specs.processor ? product.specs.processor.split('(')[0] : 'Processor'}
             </div>
-            <div className="text-emerald-700 font-bold truncate">
+              <div className="text-[#1F4F9D] font-bold truncate">
               {product.specs.ram} • {product.specs.storage}
             </div>
           </div>

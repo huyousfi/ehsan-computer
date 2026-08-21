@@ -14,8 +14,7 @@ export const Hero = () => {
 
   return (
     <div className="relative overflow-hidden bg-[#10263d] border-b border-slate-200 py-12 sm:py-16">
-        <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_80%_20%,#1F4F9D_0,transparent_28%),radial-gradient(circle_at_15%_90%,#F26522_0,transparent_24%)]" />
-      <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_80%_20%,#1d8cf8_0,transparent_28%),radial-gradient(circle_at_15%_90%,#19b77a_0,transparent_24%)]" />
+      <div className="absolute inset-0 opacity-50 bg-[radial-gradient(circle_at_80%_20%,#1F4F9D_0,transparent_28%),radial-gradient(circle_at_15%_90%,#F26522_0,transparent_24%)]" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Main Header Text */}
@@ -63,18 +62,18 @@ export const Hero = () => {
             onClick={() => scrollToCatalog('Accessories')}
             className="group cursor-pointer p-6 rounded-2xl bg-white/[0.97] border border-white/20 hover:-translate-y-1 transition-all text-left space-y-4 shadow-xl shadow-slate-950/20"
           >
-            <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-xl bg-[#eef4ff] text-[#1F4F9D] flex items-center justify-center group-hover:scale-105 transition-transform">
               <Mouse className="w-7 h-7" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-[#1F4F9D] transition-colors">
                 Computer Accessories
               </h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                 Original Chargers, Mice, Keyboards, SSDs and Bags.
               </p>
             </div>
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700">Browse accessories <ArrowRight className="w-3.5 h-3.5" /></span>
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1F4F9D]">Browse accessories <ArrowRight className="w-3.5 h-3.5" /></span>
           </div>
 
           {/* Card 3: Screen & Battery Repairs */}

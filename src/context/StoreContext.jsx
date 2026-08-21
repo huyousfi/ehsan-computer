@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { INITIAL_PRODUCTS } from '../data/initialProducts';
 import { DEFAULT_SETTINGS } from '../data/defaultSettings';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 const StoreContext = createContext();
 
@@ -11,6 +12,40 @@ const COMPARE_STORAGE_KEY = 'ehsan_store_compare_v2';
 const ADMIN_SESSION_MS = 15 * 60 * 1000;
 const ADMIN_MAX_ATTEMPTS = 5;
 const ADMIN_LOCKOUT_MS = 30 * 1000;
+
+const productToRow = (product) => ({
+  id: product.id,
+  name: product.name,
+  category: product.category,
+  brand: product.brand,
+  condition: product.condition,
+  price: product.price,
+  original_price: product.originalPrice || null,
+  in_stock: product.inStock !== false,
+  stock_count: product.stockCount || 0,
+  is_featured: product.isFeatured === true,
+  image: product.image || '',
+  summary: product.summary || '',
+  specs: product.specs || {},
+  tags: product.tags || []
+});
+
+const rowToProduct = (row) => ({
+  id: row.id,
+  name: row.name,
+  category: row.category,
+  brand: row.brand,
+  condition: row.condition,
+  price: Number(row.price),
+  originalPrice: row.original_price ? Number(row.original_price) : null,
+  inStock: row.in_stock !== false,
+  stockCount: Number(row.stock_count || 0),
+  isFeatured: row.is_featured === true,
+  image: row.image || '',
+  summary: row.summary || '',
+  specs: row.specs || {},
+  tags: Array.isArray(row.tags) ? row.tags : []
+});
 
 const IMPORTABLE_SETTING_KEYS = [
   'storeName',
@@ -139,6 +174,32 @@ export const StoreProvider = ({ children }) => {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
+  useEffect(() => {
+    if (!isSupabaseConfigured) return undefined;
+
+    const loadRemoteStore = async () => {
+      const [{ data: productRows, error: productsError }, { data: settingsRow, error: settingsError }] = await Promise.all([
+        supabase.from('products').select('*').order('created_at', { ascending: false }),
+        supabase.from('store_settings').select('settings').eq('id', 1).maybeSingle()
+      ]);
+
+      if (productsError) {
+        console.error('Failed to load products from Supabase', productsError);
+      } else if (productRows) {
+        setProducts(productRows.map(rowToProduct));
+      }
+
+      if (settingsError) {
+        console.error('Failed to load settings from Supabase', settingsError);
+      } else if (settingsRow?.settings) {
+        setSettings((previous) => ({ ...previous, ...settingsRow.settings }));
+      }
+    };
+
+    loadRemoteStore();
+    return undefined;
+  }, []);
+
   // Notification Toast State
   const [toast, setToast] = useState(null);
   const [failedAdminAttempts, setFailedAdminAttempts] = useState(0);
@@ -235,6 +296,11 @@ export const StoreProvider = ({ children }) => {
     const id = newProductData.id || `prod-${Date.now()}`;
     const newProduct = { ...newProductData, id };
     setProducts((prev) => [newProduct, ...prev]);
+    if (isSupabaseConfigured) {
+      supabase.from('products').insert(productToRow(newProduct)).then(({ error }) => {
+        if (error) console.error('Failed to create product in Supabase', error);
+      });
+    }
     showToast('Product created successfully!', 'success');
     return true;
   };
@@ -243,6 +309,11 @@ export const StoreProvider = ({ children }) => {
     setProducts((prev) =>
       prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
     );
+    if (isSupabaseConfigured) {
+      supabase.from('products').upsert(productToRow(updatedProduct)).then(({ error }) => {
+        if (error) console.error('Failed to update product in Supabase', error);
+      });
+    }
     showToast('Product updated successfully!', 'success');
     return true;
   };
@@ -251,6 +322,11 @@ export const StoreProvider = ({ children }) => {
     setProducts((prev) => prev.filter((p) => p.id !== productId));
     setCart((prev) => prev.filter((p) => p.id !== productId));
     setCompareList((prev) => prev.filter((p) => p.id !== productId));
+    if (isSupabaseConfigured) {
+      supabase.from('products').delete().eq('id', productId).then(({ error }) => {
+        if (error) console.error('Failed to delete product in Supabase', error);
+      });
+    }
     showToast('Product deleted', 'info');
   };
 
@@ -258,11 +334,24 @@ export const StoreProvider = ({ children }) => {
     setProducts((prev) =>
       prev.map((p) => (p.id === productId ? { ...p, inStock: !p.inStock } : p))
     );
+    if (isSupabaseConfigured) {
+      const product = products.find((item) => item.id === productId);
+      if (product) {
+        supabase.from('products').update({ in_stock: !product.inStock }).eq('id', productId).then(({ error }) => {
+          if (error) console.error('Failed to update product stock in Supabase', error);
+        });
+      }
+    }
     showToast('Stock status updated', 'info');
   };
 
   const updateStoreSettings = (newSettings) => {
     setSettings((prev) => ({ ...prev, ...newSettings }));
+    if (isSupabaseConfigured) {
+      supabase.from('store_settings').upsert({ id: 1, settings: { ...settings, ...newSettings }, updated_at: new Date().toISOString() }).then(({ error }) => {
+        if (error) console.error('Failed to update settings in Supabase', error);
+      });
+    }
     showToast('Settings saved successfully', 'success');
   };
 
