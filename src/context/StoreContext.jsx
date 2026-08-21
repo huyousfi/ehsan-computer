@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS } from '../data/defaultSettings';
 
 const StoreContext = createContext();
 
-const PRODUCTS_STORAGE_KEY = 'ehsan_store_products_v2';
+const PRODUCTS_STORAGE_KEY = 'ehsan_store_products_v3';
 const SETTINGS_STORAGE_KEY = 'ehsan_store_settings_v2';
 const CART_STORAGE_KEY = 'ehsan_store_cart_v2';
 const COMPARE_STORAGE_KEY = 'ehsan_store_compare_v2';

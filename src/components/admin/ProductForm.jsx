@@ -1,22 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { X, Save } from 'lucide-react';
+import { X, Save, Upload, Image as ImageIcon } from 'lucide-react';
 
 export const ProductForm = ({ productToEdit, onClose }) => {
   const { addProduct, updateProduct, settings } = useStore();
 
   const isEditing = !!productToEdit;
-
-  const sampleImages = [
-    { label: 'MacBook', url: 'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?auto=format&fit=crop&w=800&q=80' },
-    { label: 'Dell Laptop', url: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=800&q=80' },
-    { label: 'ThinkPad', url: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=800&q=80' },
-    { label: 'Gaming Laptop', url: 'https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=800&q=80' },
-    { label: 'Mouse', url: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=800&q=80' },
-    { label: 'Keyboard', url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80' },
-    { label: 'Charger', url: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80' },
-    { label: 'Monitor', url: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=800&q=80' },
-  ];
 
   const [formData, setFormData] = useState({
     name: '',
@@ -28,7 +17,7 @@ export const ProductForm = ({ productToEdit, onClose }) => {
     inStock: true,
     stockCount: 5,
     isFeatured: false,
-    image: sampleImages[0].url,
+    image: '',
     summary: '',
     specs: {
       processor: '',
@@ -64,6 +53,25 @@ export const ProductForm = ({ productToEdit, onClose }) => {
       ...prev,
       specs: { ...prev.specs, [specKey]: value }
     }));
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please choose an image file.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Please choose an image smaller than 5 MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => handleChange('image', reader.result);
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e) => {
@@ -231,41 +239,33 @@ export const ProductForm = ({ productToEdit, onClose }) => {
             </div>
           </div>
 
-          {/* Photo URL & Quick Presets */}
+          {/* Product image upload */}
           <div className="space-y-2 pt-3 border-t border-slate-800">
             <label className="font-bold text-sky-700 uppercase tracking-wider text-[11px]">
               2. Product Image
             </label>
 
-            <div className="flex gap-3 items-center">
-              <img
-                src={formData.image || sampleImages[0].url}
-                alt="Preview"
-                className="w-14 h-14 rounded-xl object-cover bg-slate-950 border border-slate-700 shrink-0"
-              />
-              <div className="flex-1">
-                <input
-                  type="url"
-                  placeholder="Paste image URL (https://...)"
-                  value={formData.image}
-                  onChange={(e) => handleChange('image', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-sky-500"
-                />
+            <div className="flex gap-3 items-center rounded-2xl border border-slate-200 bg-white p-3">
+              <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center">
+                {formData.image ? (
+                  <img src={formData.image} alt="Product preview" className="w-full h-full object-cover" />
+                ) : (
+                  <ImageIcon className="w-7 h-7 text-slate-300" />
+                )}
               </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              <span className="text-[10px] text-slate-500">Or choose preset photo:</span>
-              {sampleImages.map((s) => (
-                <button
-                  type="button"
-                  key={s.label}
-                  onClick={() => handleChange('image', s.url)}
-                  className="px-2 py-0.5 rounded text-[10px] bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800"
-                >
-                  {s.label}
-                </button>
-              ))}
+              <div className="flex-1 space-y-1.5">
+                <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold cursor-pointer transition-colors">
+                  <Upload className="w-4 h-4" />
+                  <span>{formData.image ? 'Change image' : 'Choose image'}</span>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="sr-only" />
+                </label>
+                <p className="text-[10px] text-slate-500">JPG, PNG, or WEBP up to 5 MB. The image stays on this device.</p>
+                {formData.image && (
+                  <button type="button" onClick={() => handleChange('image', '')} className="text-[10px] font-semibold text-rose-600 hover:text-rose-700">
+                    Remove image
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

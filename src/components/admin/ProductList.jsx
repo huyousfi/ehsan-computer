@@ -146,6 +146,18 @@ export const ProductList = () => {
               ))}
             </tbody>
           </table>
+          {filtered.length === 0 && (
+            <div className="px-6 py-14 text-center border-t border-slate-100">
+              <div className="mx-auto w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                <Plus className="w-6 h-6" />
+              </div>
+              <h4 className="mt-3 text-sm font-bold text-slate-900">Your catalog is ready</h4>
+              <p className="mt-1 text-xs text-slate-500">Add your first product to start showing items on the website.</p>
+              <button onClick={() => setIsAddingNew(true)} className="mt-4 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold">
+                Add first product
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
