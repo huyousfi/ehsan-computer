@@ -120,8 +120,6 @@ export const StoreProvider = ({ children }) => {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return undefined;
-
     const loadRemoteStore = async () => {
       const [{ data: productRows, error: productsError }, { data: settingsRow, error: settingsError }] = await Promise.all([
         supabase.from('products').select('*').order('created_at', { ascending: false }),
@@ -130,16 +128,23 @@ export const StoreProvider = ({ children }) => {
 
       if (productsError) {
         console.error('Failed to load products from Supabase', productsError);
+        showToast(`Could not load products: ${productsError.message}`, 'error');
       } else if (productRows) {
         setProducts(productRows.map(rowToProduct));
       }
 
       if (settingsError) {
         console.error('Failed to load settings from Supabase', settingsError);
+        showToast(`Could not load store settings: ${settingsError.message}`, 'error');
       } else if (settingsRow?.settings) {
         setSettings((previous) => ({ ...previous, ...settingsRow.settings }));
       }
     };
+
+    if (!isSupabaseConfigured) {
+      showToast('Supabase is not configured in this deployment.', 'error');
+      return undefined;
+    }
 
     loadRemoteStore();
     return undefined;
