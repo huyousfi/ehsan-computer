@@ -85,7 +85,7 @@ export const ProductForm = ({ productToEdit, onClose }) => {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.price) {
       alert('Please provide at least product name and price.');
@@ -99,12 +99,12 @@ export const ProductForm = ({ productToEdit, onClose }) => {
       stockCount: Number(formData.stockCount || 1)
     };
 
-    if (isEditing) {
-      updateProduct(payload);
-    } else {
-      addProduct(payload);
+    const saved = isEditing
+      ? await updateProduct(payload)
+      : await addProduct(payload);
+    if (saved) {
+      onClose();
     }
-    onClose();
   };
 
   const isLaptop = formData.category === 'Laptops';

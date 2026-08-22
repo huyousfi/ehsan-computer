@@ -1,14 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { INITIAL_PRODUCTS } from '../data/initialProducts';
 import { DEFAULT_SETTINGS } from '../data/defaultSettings';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 const StoreContext = createContext();
 
-const PRODUCTS_STORAGE_KEY = 'ehsan_store_products_v3';
-const SETTINGS_STORAGE_KEY = 'ehsan_store_settings_v2';
-const CART_STORAGE_KEY = 'ehsan_store_cart_v2';
-const COMPARE_STORAGE_KEY = 'ehsan_store_compare_v2';
 const ADMIN_SESSION_MS = 15 * 60 * 1000;
 const ADMIN_MAX_ATTEMPTS = 5;
 const ADMIN_LOCKOUT_MS = 30 * 1000;
@@ -94,78 +89,17 @@ const normalizeImportedProduct = (product) => ({
 });
 
 export const StoreProvider = ({ children }) => {
-  // 1. Products State with LocalStorage
-  const [products, setProducts] = useState(() => {
-    try {
-      const saved = localStorage.getItem(PRODUCTS_STORAGE_KEY);
-      const parsed = saved ? JSON.parse(saved) : null;
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_PRODUCTS;
-    } catch (e) {
-      return INITIAL_PRODUCTS;
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
-    } catch (e) {
-      console.error('Failed to save products to localStorage', e);
-    }
-  }, [products]);
+  // Products and settings are loaded from Supabase only.
+  const [products, setProducts] = useState([]);
 
   // 2. Settings State
-  const [settings, setSettings] = useState(() => {
-    try {
-      const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS;
-    } catch (e) {
-      return DEFAULT_SETTINGS;
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-    } catch (e) {
-      console.error('Failed to save settings to localStorage', e);
-    }
-  }, [settings]);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
   // 3. Cart State
-  const [cart, setCart] = useState(() => {
-    try {
-      const saved = localStorage.getItem(CART_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-    } catch (e) {
-      console.error('Failed to save cart to localStorage', e);
-    }
-  }, [cart]);
+  const [cart, setCart] = useState([]);
 
   // 4. Compare List State (Laptops)
-  const [compareList, setCompareList] = useState(() => {
-    try {
-      const saved = localStorage.getItem(COMPARE_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(COMPARE_STORAGE_KEY, JSON.stringify(compareList));
-    } catch (e) {
-      console.error('Failed to save compare list', e);
-    }
-  }, [compareList]);
+  const [compareList, setCompareList] = useState([]);
 
   // 5. Filter State (Simplified for user friendliness)
   const initialFilters = {
@@ -196,7 +130,7 @@ export const StoreProvider = ({ children }) => {
 
       if (productsError) {
         console.error('Failed to load products from Supabase', productsError);
-      } else if (productRows?.length > 0) {
+      } else if (productRows) {
         setProducts(productRows.map(rowToProduct));
       }
 
@@ -303,48 +237,64 @@ export const StoreProvider = ({ children }) => {
   };
 
   // Admin / Product Operations
-  const addProduct = (newProductData) => {
+  const addProduct = async (newProductData) => {
     const id = newProductData.id || `prod-${Date.now()}`;
     const newProduct = { ...newProductData, id };
-    setProducts((prev) => [newProduct, ...prev]);
-    if (isSupabaseConfigured) {
-      supabase.from('products').insert(productToRow(newProduct)).then(({ error }) => {
-        if (error) {
-          console.error('Failed to create product in Supabase', error);
-          showToast(getSupabaseWriteError(error), 'error');
-        }
-      });
+    if (!isSupabaseConfigured) {
+      showToast('Supabase is not configured.', 'error');
+      return false;
     }
+
+    const { error } = await supabase.from('products').insert(productToRow(newProduct));
+    if (error) {
+      console.error('Failed to create product in Supabase', error);
+      showToast(getSupabaseWriteError(error), 'error');
+      return false;
+    }
+
+    setProducts((prev) => [newProduct, ...prev]);
     showToast('Product created successfully!', 'success');
     return true;
   };
 
-  const updateProduct = (updatedProduct) => {
+  const updateProduct = async (updatedProduct) => {
+    if (!isSupabaseConfigured) {
+      showToast('Supabase is not configured.', 'error');
+      return false;
+    }
+
+    const { error } = await supabase.from('products').upsert(productToRow(updatedProduct));
+    if (error) {
+      console.error('Failed to update product in Supabase', error);
+      showToast(getSupabaseWriteError(error), 'error');
+      return false;
+    }
+
     setProducts((prev) =>
       prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
     );
-    if (isSupabaseConfigured) {
-      supabase.from('products').upsert(productToRow(updatedProduct)).then(({ error }) => {
-        if (error) {
-          console.error('Failed to update product in Supabase', error);
-          showToast(getSupabaseWriteError(error), 'error');
-        }
-      });
-    }
     showToast('Product updated successfully!', 'success');
     return true;
   };
 
-  const deleteProduct = (productId) => {
+  const deleteProduct = async (productId) => {
+    if (!isSupabaseConfigured) {
+      showToast('Supabase is not configured.', 'error');
+      return false;
+    }
+
+    const { error } = await supabase.from('products').delete().eq('id', productId);
+    if (error) {
+      console.error('Failed to delete product in Supabase', error);
+      showToast(getSupabaseWriteError(error), 'error');
+      return false;
+    }
+
     setProducts((prev) => prev.filter((p) => p.id !== productId));
     setCart((prev) => prev.filter((p) => p.id !== productId));
     setCompareList((prev) => prev.filter((p) => p.id !== productId));
-    if (isSupabaseConfigured) {
-      supabase.from('products').delete().eq('id', productId).then(({ error }) => {
-        if (error) console.error('Failed to delete product in Supabase', error);
-      });
-    }
     showToast('Product deleted', 'info');
+    return true;
   };
 
   const toggleProductStock = (productId) => {
@@ -362,14 +312,23 @@ export const StoreProvider = ({ children }) => {
     showToast('Stock status updated', 'info');
   };
 
-  const updateStoreSettings = (newSettings) => {
-    setSettings((prev) => ({ ...prev, ...newSettings }));
-    if (isSupabaseConfigured) {
-      supabase.from('store_settings').upsert({ id: 1, settings: { ...settings, ...newSettings }, updated_at: new Date().toISOString() }).then(({ error }) => {
-        if (error) console.error('Failed to update settings in Supabase', error);
-      });
+  const updateStoreSettings = async (newSettings) => {
+    if (!isSupabaseConfigured) {
+      showToast('Supabase is not configured.', 'error');
+      return false;
     }
+
+    const nextSettings = { ...settings, ...newSettings };
+    const { error } = await supabase.from('store_settings').upsert({ id: 1, settings: nextSettings, updated_at: new Date().toISOString() });
+    if (error) {
+      console.error('Failed to update settings in Supabase', error);
+      showToast(getSupabaseWriteError(error), 'error');
+      return false;
+    }
+
+    setSettings(nextSettings);
     showToast('Settings saved successfully', 'success');
+    return true;
   };
 
   const exportCatalogJSON = () => {
@@ -422,11 +381,7 @@ export const StoreProvider = ({ children }) => {
   };
 
   const resetToDefaultData = () => {
-    setProducts(INITIAL_PRODUCTS);
-    setSettings(DEFAULT_SETTINGS);
-    localStorage.removeItem(PRODUCTS_STORAGE_KEY);
-    localStorage.removeItem(SETTINGS_STORAGE_KEY);
-    showToast('Reset to original default catalog', 'info');
+    showToast('Browser storage has been removed. Manage catalog data in Supabase.', 'info');
   };
 
   const loginAdmin = (enteredPin) => {
