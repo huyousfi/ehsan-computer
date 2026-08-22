@@ -22,15 +22,16 @@ export const AdminModal = () => {
     settings 
   } = useStore();
 
-  const [pinInput, setPinInput] = useState('');
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
   const [activeTab, setActiveTab] = useState('products');
 
   if (!isAdminOpen) return null;
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    loginAdmin(pinInput);
-    setPinInput('');
+    await loginAdmin(emailInput, passwordInput);
+    setPasswordInput('');
   };
 
   const handleClose = () => {
@@ -82,7 +83,7 @@ export const AdminModal = () => {
         <div className="p-4 sm:p-7 overflow-y-auto flex-1">
           
           {!isAdminAuthenticated ? (
-            /* PIN Login Screen */
+            /* Supabase Auth login screen */
             <div className="max-w-sm mx-auto py-12 text-center space-y-5">
               <div className="w-14 h-14 rounded-2xl bg-sky-100 border border-sky-200 flex items-center justify-center text-sky-700 mx-auto">
                 <KeyRound className="w-7 h-7" />
@@ -91,19 +92,26 @@ export const AdminModal = () => {
               <div>
                 <h3 className="text-base font-bold text-slate-950">Unlock your store workspace</h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Enter your security PIN to manage products and store settings.
+                  Sign in with your Supabase admin account to manage products and store settings.
                 </p>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-3">
                 <input
-                  type="password"
-                  maxLength="10"
+                  type="email"
                   autoFocus
-                  placeholder="Enter PIN"
-                  value={pinInput}
-                  onChange={(e) => setPinInput(e.target.value)}
-                  className="w-full text-center py-3 px-4 bg-white border border-slate-300 rounded-xl text-lg font-mono tracking-widest text-slate-950 focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  placeholder="Admin email"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  className="w-full text-center py-3 px-4 bg-white border border-slate-300 rounded-xl text-sm text-slate-950 focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                />
+                <input
+                  type="password"
+                  required
+                  placeholder="Password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className="w-full text-center py-3 px-4 bg-white border border-slate-300 rounded-xl text-sm text-slate-950 focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 />
 
                 <button

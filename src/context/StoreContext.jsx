@@ -117,7 +117,7 @@ export const StoreProvider = ({ children }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [authUser, setAuthUser] = useState(null);
 
   useEffect(() => {
     const loadRemoteStore = async () => {
@@ -146,8 +146,12 @@ export const StoreProvider = ({ children }) => {
       return undefined;
     }
 
+    supabase.auth.getSession().then(({ data }) => setAuthUser(data.session?.user || null));
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user || null);
+    });
     loadRemoteStore();
-    return undefined;
+    return () => authListener.subscription.unsubscribe();
   }, []);
 
   // Notification Toast State
@@ -245,7 +249,7 @@ export const StoreProvider = ({ children }) => {
   const addProduct = async (newProductData) => {
     const id = newProductData.id || `prod-${Date.now()}`;
     const newProduct = { ...newProductData, id };
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || !authUser) {
       showToast('Supabase is not configured.', 'error');
       return false;
     }
@@ -263,7 +267,7 @@ export const StoreProvider = ({ children }) => {
   };
 
   const updateProduct = async (updatedProduct) => {
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || !authUser) {
       showToast('Supabase is not configured.', 'error');
       return false;
     }
@@ -283,7 +287,7 @@ export const StoreProvider = ({ children }) => {
   };
 
   const deleteProduct = async (productId) => {
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || !authUser) {
       showToast('Supabase is not configured.', 'error');
       return false;
     }
@@ -318,7 +322,7 @@ export const StoreProvider = ({ children }) => {
   };
 
   const updateStoreSettings = async (newSettings) => {
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || !authUser) {
       showToast('Supabase is not configured.', 'error');
       return false;
     }
@@ -389,50 +393,47 @@ export const StoreProvider = ({ children }) => {
     showToast('Browser storage has been removed. Manage catalog data in Supabase.', 'info');
   };
 
-  const loginAdmin = (enteredPin) => {
-    if (adminLockedUntil > Date.now()) {
-      const seconds = Math.ceil((adminLockedUntil - Date.now()) / 1000);
-      showToast(`Too many attempts. Try again in ${seconds}s.`, 'error');
+  const loginAdmin = async (email, password) => {
+    if (!isSupabaseConfigured) {
+      showToast('Supabase is not configured.', 'error');
       return false;
     }
-
-    if (enteredPin === settings.adminPin) {
-      setIsAdminAuthenticated(true);
-      setFailedAdminAttempts(0);
-      setAdminLockedUntil(0);
-      showToast('Admin access granted', 'success');
-      return true;
-    }
-
-    const nextAttempts = failedAdminAttempts + 1;
-    setFailedAdminAttempts(nextAttempts);
-    if (nextAttempts >= ADMIN_MAX_ATTEMPTS) {
-      setAdminLockedUntil(Date.now() + ADMIN_LOCKOUT_MS);
-      setFailedAdminAttempts(0);
-      showToast('Too many attempts. Admin login is paused for 30 seconds.', 'error');
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      showToast(error.message, 'error');
       return false;
     }
-    showToast('Incorrect PIN. Please try again.', 'error');
-    return false;
+    showToast('Admin access granted', 'success');
+    return true;
   };
 
-  const logoutAdmin = () => {
-    setIsAdminAuthenticated(false);
+  const logoutAdmin = async () => {
+    await supabase.auth.signOut();
     setIsAdminOpen(false);
     showToast('Logged out of Admin panel', 'info');
   };
 
+  const updateAdminPassword = async (password) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      showToast(error.message, 'error');
+      return false;
+    }
+    showToast('Password changed successfully', 'success');
+    return true;
+  };
+
   useEffect(() => {
-    if (!isAdminAuthenticated) return undefined;
+    if (!authUser) return undefined;
 
     const sessionTimer = window.setTimeout(() => {
-      setIsAdminAuthenticated(false);
+      supabase.auth.signOut();
       setIsAdminOpen(false);
       showToast('Admin session expired. Please unlock the panel again.', 'info');
     }, ADMIN_SESSION_MS);
 
     return () => window.clearTimeout(sessionTimer);
-  }, [isAdminAuthenticated]);
+  }, [authUser]);
 
   // Filtered Products
   const filteredProducts = products.filter((product) => {
@@ -490,7 +491,7 @@ export const StoreProvider = ({ children }) => {
         isCartOpen,
         isCompareOpen,
         isAdminOpen,
-        isAdminAuthenticated,
+        isAdminAuthenticated: Boolean(authUser),
         toast,
         // Actions
         addToCart,
@@ -513,6 +514,7 @@ export const StoreProvider = ({ children }) => {
         deleteProduct,
         toggleProductStock,
         updateStoreSettings,
+        updateAdminPassword,
         exportCatalogJSON,
         importCatalogJSON,
         resetToDefaultData,

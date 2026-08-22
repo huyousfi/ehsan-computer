@@ -40,23 +40,37 @@ alter table public.products drop constraint if exists products_category_check;
 alter table public.products add constraint products_category_check
   check (category in ('Laptops', 'Accessories'));
 
--- The admin PIN is currently checked in the browser, so these policies allow
--- the current admin form to write products. Add Supabase Auth before production use.
 drop policy if exists "Anyone can insert products" on public.products;
 create policy "Anyone can insert products"
 on public.products for insert
+to authenticated
 with check (true);
 
 drop policy if exists "Anyone can update products" on public.products;
 create policy "Anyone can update products"
 on public.products for update
+to authenticated
 using (true)
 with check (true);
 
 drop policy if exists "Anyone can delete products" on public.products;
 create policy "Anyone can delete products"
 on public.products for delete
+to authenticated
 using (true);
+
+drop policy if exists "Anyone can insert settings" on public.store_settings;
+create policy "Anyone can insert settings"
+on public.store_settings for insert
+to authenticated
+with check (true);
+
+drop policy if exists "Anyone can update settings" on public.store_settings;
+create policy "Anyone can update settings"
+on public.store_settings for update
+to authenticated
+using (true)
+with check (true);
 
 -- Test insert: run this after the schema above. The category spelling is required.
 insert into public.products (

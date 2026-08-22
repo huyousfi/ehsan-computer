@@ -14,6 +14,7 @@ export const StoreSettings = () => {
   const { 
     settings, 
     updateStoreSettings, 
+    updateAdminPassword,
     exportCatalogJSON, 
     importCatalogJSON, 
     resetToDefaultData 
@@ -146,14 +147,10 @@ export const StoreSettings = () => {
           </div>
 
           <div>
-            <label className="block text-slate-400 mb-1 font-semibold">Admin Security PIN</label>
-            <input
-              type="text"
-              required
-              value={formData.adminPin}
-              onChange={(e) => handleChange('adminPin', e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-sky-500"
-            />
+            <label className="block text-slate-400 mb-1 font-semibold">Admin account</label>
+            <p className="px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-slate-600">
+              Change the Supabase Auth password below.
+            </p>
           </div>
 
           <div>
@@ -177,6 +174,8 @@ export const StoreSettings = () => {
           </button>
         </div>
       </form>
+
+      <PasswordChange updateAdminPassword={updateAdminPassword} />
 
       {/* Data Backup & Portability Section */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-4 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
@@ -232,5 +231,37 @@ export const StoreSettings = () => {
       </div>
 
     </div>
+  );
+};
+
+const PasswordChange = ({ updateAdminPassword }) => {
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (password.length < 6) return;
+    const changed = await updateAdminPassword(password);
+    if (changed) setPassword('');
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-700">Supabase Auth</p>
+        <h4 className="text-lg font-extrabold text-slate-950">Change admin password</h4>
+      </div>
+      <input
+        type="password"
+        required
+        minLength="6"
+        placeholder="New password (at least 6 characters)"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+      />
+      <button type="submit" className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold">
+        Change Password
+      </button>
+    </form>
   );
 };
