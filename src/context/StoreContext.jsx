@@ -47,6 +47,16 @@ const rowToProduct = (row) => ({
   tags: Array.isArray(row.tags) ? row.tags : []
 });
 
+const getSupabaseWriteError = (error) => {
+  if (error?.code === '23514') {
+    return 'Product category must be exactly "Laptops" or "Accessories".';
+  }
+  if (error?.code === '42501') {
+    return 'Supabase rejected this write. Add an INSERT or UPDATE policy for products.';
+  }
+  return error?.message || 'Supabase rejected the product change.';
+};
+
 const IMPORTABLE_SETTING_KEYS = [
   'storeName',
   'tagline',
@@ -299,7 +309,10 @@ export const StoreProvider = ({ children }) => {
     setProducts((prev) => [newProduct, ...prev]);
     if (isSupabaseConfigured) {
       supabase.from('products').insert(productToRow(newProduct)).then(({ error }) => {
-        if (error) console.error('Failed to create product in Supabase', error);
+        if (error) {
+          console.error('Failed to create product in Supabase', error);
+          showToast(getSupabaseWriteError(error), 'error');
+        }
       });
     }
     showToast('Product created successfully!', 'success');
@@ -312,7 +325,10 @@ export const StoreProvider = ({ children }) => {
     );
     if (isSupabaseConfigured) {
       supabase.from('products').upsert(productToRow(updatedProduct)).then(({ error }) => {
-        if (error) console.error('Failed to update product in Supabase', error);
+        if (error) {
+          console.error('Failed to update product in Supabase', error);
+          showToast(getSupabaseWriteError(error), 'error');
+        }
       });
     }
     showToast('Product updated successfully!', 'success');

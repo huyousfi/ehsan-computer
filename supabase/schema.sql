@@ -35,4 +35,10 @@ create policy "Anyone can view settings"
 on public.store_settings for select
 using (true);
 
+-- Run this once in the Supabase SQL Editor when products already exists.
+-- Product rows must use category values exactly as shown below.
+alter table public.products drop constraint if exists products_category_check;
+alter table public.products add constraint products_category_check
+  check (category in ('Laptops', 'Accessories'));
+
 -- Write policies will be added after Supabase Auth is connected to the admin panel.
