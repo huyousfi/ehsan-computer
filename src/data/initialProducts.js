@@ -1,5 +1,4 @@
-export const INITIAL_PRODUCTS = [];
-/*
+export const INITIAL_PRODUCTS = [
   // LAPTOPS
   {
     id: 'lp-01',
@@ -318,4 +317,3 @@ export const INITIAL_PRODUCTS = [];
     tags: ['Storage', 'SSD', '1TB']
   }
 ];
-*/

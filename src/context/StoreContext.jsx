@@ -88,7 +88,8 @@ export const StoreProvider = ({ children }) => {
   const [products, setProducts] = useState(() => {
     try {
       const saved = localStorage.getItem(PRODUCTS_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_PRODUCTS;
     } catch (e) {
       return INITIAL_PRODUCTS;
     }
@@ -185,7 +186,7 @@ export const StoreProvider = ({ children }) => {
 
       if (productsError) {
         console.error('Failed to load products from Supabase', productsError);
-      } else if (productRows) {
+      } else if (productRows?.length > 0) {
         setProducts(productRows.map(rowToProduct));
       }
 
